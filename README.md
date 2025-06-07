@@ -2,14 +2,7 @@
 
 A GEANT4 simulation for studying charge sharing position reconstruction in LGAD pixel sensors.
 
-## Physics Overview
-
-### Detector Model
-- **Geometry**: Pixelated silicon detector with aluminum pixel pads
-- **Pixel Layout**: Configurable grid with $100\mu m$ pixel size and $500\mu m$ spacing by default
-- **Active Volume**: $30\times 30 \mathrm{mm}^{2}$ silicon substrate ($50\mu m$ thickness)
-
-### Charge Sharing Physics
+### Charge Sharing
 
 When a particle deposits energy in the detector, the simulation models the following process:
 
