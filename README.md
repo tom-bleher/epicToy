@@ -1,12 +1,12 @@
 # epicToy: LGAD Charge Sharing Simulation
 
-A GEANT4-based Monte Carlo simulation for studying charge sharing and position reconstruction in AC-LGAD (Alternating Current Low Gain Avalanche Detector) pixel sensors.
+A GEANT4 simulation for studying charge sharing position reconstruction in LGAD pixel sensors.
 
 ## Physics Overview
 
 ### Detector Model
-- **Geometry**: Pixelated silicon detector with aluminum readout pixels
-- **Pixel Layout**: Configurable grid with $100\mu m$ pixel size and 500 μm spacing
+- **Geometry**: Pixelated silicon detector with aluminum pixel pads
+- **Pixel Layout**: Configurable grid with $100\mu m$ pixel size and $500\mu m$ spacing by default
 - **Active Volume**: $30\times 30 \mathrm{mm}^{2}$ silicon substrate ($50\mu m$ thickness)
 
 ### Charge Sharing Physics
@@ -43,8 +43,8 @@ The simulation implements 2D Gaussian fitting for position reconstruction:
 - **Y-direction**: Fit Gaussian to charge distribution along central column
 
 #### Diagonal Fitting
-- **Main diagonal**: Fit along line with slope +1
-- **Secondary diagonal**: Fit along line with slope -1
+- **Main diagonal**: Fit along main neighborhood matrix diagonal
+- **Secondary diagonal**: Fit along secondary neighborhood matrix diagonal
 
 All fits use the parameterized Gaussian function: 
 
@@ -52,31 +52,31 @@ $$
 y(x) = A \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right) + B
 $$
 
-## Build Requirements
+Such that:
 
-- **GEANT4** (v11.0+) with Qt and OpenGL support
-- **ROOT** (v6.20+) for data output
-- **CMake** (v3.5+)
-- **C++17** compatible compiler
-- **Ceres Solver**
+- A: peak amplitude
+- $m$: center
+- $\sigma$: width
+- $\mathrm{FWHM}: 2\sqrt{2\ln2}\,\sigma$
+- $B$: constant, vertical offset
 
-## Installation
 
-### Environment Setup
-```bash
-source ~/Geant4/geant4-v11.3.1-install/share/Geant4/geant4make/geant4make.sh
-export QT_QPA_PLATFORM=xcb
-```
+And the parameterized Lorentzian function: 
 
-### Build Process
-```bash
-mkdir build && cd build
-cmake .. && make -j5
-```
+$$
+y(x) = \frac{A}{1+\bigl(\frac{x-m}{\gamma}\bigr)^2} + B
+$$
+
+Such that:
+
+- $A$: peak amplitude
+- $m$: center
+- $\mathrm{FWHM}: 2\gamma$
+- $B$: vertical offset
 
 ## Usage
 
-### Interactive Mode (GUI)
+### Interactive (GUI)
 ```bash
 ./epicToy
 ```
@@ -85,75 +85,6 @@ cmake .. && make -j5
 ```bash
 ./epicToy -m ../macros/run.mac
 ```
-
-## Output Data Structure
-
-The simulation generates ROOT files with the following branches:
-
-### Event Information
-| Branch | Type | Units | Description |
-|--------|------|-------|-------------|
-| `Edep` | Double | MeV | Energy deposited in detector |
-| `TrueX/Y/Z` | Double | mm | True hit position |
-| `PixelX/Y/Z` | Double | mm | Nearest pixel center |
-| `PixelI/J` | Integer | - | Pixel grid indices |
-| `PixelHit` | Boolean | - | Direct pixel hit flag |
-
-### Charge Sharing Data (Non-Pixel Hits)
-| Branch | Type | Description |
-|--------|------|-------------|
-| `GridNeighborhoodAngles` | Vector<Double> | Alpha angles for 9×9 grid |
-| `GridNeighborhoodChargeFractions` | Vector<Double> | Charge fractions per pixel |
-| `GridNeighborhoodCharge` | Vector<Double> | Actual charge values [C] |
-
-### Gaussian Fit Results
-| Branch | Type | Description |
-|--------|------|-------------|
-| `Fit2D_XCenter/YCenter` | Double | Fitted position from row/column |
-| `Fit2D_XSigma/YSigma` | Double | Fitted width parameters |
-| `Fit2D_XAmplitude/YAmplitude` | Double | Fitted amplitudes |
-| `Fit2D_X*Err/Y*Err` | Double | Parameter uncertainties |
-| `Fit2D_XChi2red/YChi2red` | Double | Reduced $$\chi^2$$ values |
-| `FitDiag_Main*/Sec*` | Double | Diagonal fit results |
-
-### Delta Variables
-| Branch | Type | Description |
-|--------|------|-------------|
-| `PixelTrueDeltaX/Y` | Double | Pixel center - true position |
-| `GaussTrueDeltaX/Y` | Double | Fitted center - true position |
-
-## Hit Classification
-
-Events are classified into two categories:
-
-1. **Pixel Hits** (`PixelHit = true`):
-   - Direct hits on pixel covered areas
-   - No charge sharing performed, all charge disposed in pixel
-
-2. **Non-Pixel Hits** (`PixelHit = false`):
-   - Hits farther than $$d_0$$ from pixel centers
-   - Subject to charge sharing and Gaussian fitting
-
-## Key Algorithms
-
-### 2D Gaussian Fitting
-- **Method**: Levenberg-Marquardt optimization
-- **Convergence**: Analytical derivatives with damping factor adjustment
-- **Error Estimation**: Curvature-based parameter uncertainties
-- **Success Criteria**: Minimum 3 data points, stable convergence
-
-### Neighborhood Construction
-- **Grid Size**: 9×9 pixels (radius = 4)
-- **Center**: Nearest pixel to true hit position
-- **Boundary**: Rectangular grid aligned with detector axes
-
-## Physics Validation
-
-The simulation includes several validation mechanisms:
-- Energy conservation checks
-- Charge fraction normalization ($\sum F_i = 1$)
-- Geometric consistency verification
-- Fit quality assessment ($\chi^2/\text{NDF}$)
 
 ## Project Structure
 
